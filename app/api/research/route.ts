@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     if (model === "jiminy") {
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-      const gemini = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const gemini = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const parts: any[] = [];
