@@ -11,6 +11,7 @@ const links = [
   { href: "/#sobre-nain", label: "Sobre Nain" },
   { href: "/#testimonios", label: "Testimonios" },
   { href: "/tools", label: "Herramientas" },
+  { href: "/recursos", label: "Recursos" },
 ];
 
 export function Nav() {

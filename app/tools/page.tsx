@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/sections/footer";
-import { Wrench, MagicWand, ArrowUpRight, Microscope } from "@phosphor-icons/react/dist/ssr";
+import { Wrench, MagicWand, ArrowUpRight, Microscope, Calculator, ChartBar, Package, Video, Megaphone, Target } from "@phosphor-icons/react/dist/ssr";
 
 const herramientas = [
   {
@@ -25,6 +25,54 @@ const herramientas = [
     icon: Wrench,
     nombre: "Validador de Productos",
     descripcion: "Evalúa si un producto tiene potencial en dropshipping antes de invertir tiempo y dinero.",
+    estado: "En construcción",
+    featured: false,
+  },
+  {
+    href: "#",
+    icon: Calculator,
+    nombre: "Calculadora de Producto",
+    descripcion: "Calcula el margen real de un producto: costo, envío, comisión y ganancia neta en segundos.",
+    estado: "En construcción",
+    featured: false,
+  },
+  {
+    href: "#",
+    icon: Package,
+    nombre: "Reportes Logísticos",
+    descripcion: "Analiza el rendimiento de tu operación logística: tiempos de entrega, devoluciones y cuellos de botella.",
+    estado: "En construcción",
+    featured: false,
+  },
+  {
+    href: "#",
+    icon: Target,
+    nombre: "Generador de Ángulos de Venta",
+    descripcion: "Descubre los ángulos más efectivos para vender tu producto: dolor, deseo, objeción y gancho por público.",
+    estado: "En construcción",
+    featured: false,
+  },
+  {
+    href: "#",
+    icon: Video,
+    nombre: "Generador de Guiones para Videos Ads",
+    descripcion: "Crea guiones listos para grabar: estructura gancho, desarrollo y CTA optimizados para Meta y TikTok.",
+    estado: "En construcción",
+    featured: false,
+  },
+  {
+    href: "#",
+    icon: Megaphone,
+    nombre: "Generador de Anuncios con Google Nano Banana",
+    descripcion: "Genera imágenes de anuncios listas para pautar usando las plantillas de Ecom Circle Club y Google Nano Banana.",
+    estado: "En construcción",
+    featured: false,
+  },
+  {
+    href: "#",
+    icon: ChartBar,
+    nombre: "Análisis de Campañas Meta Ads",
+    descripcion: "Pega las métricas de tu campaña y obtén un diagnóstico con problemas, oportunidades y acciones concretas.",
     estado: "En construcción",
     featured: false,
   },
@@ -53,16 +101,10 @@ export default function ToolsPage() {
             {herramientas.map((h) => {
               const Icon = h.icon;
               const disponible = h.estado === "Disponible";
-              return (
-                <Link
-                  key={h.nombre}
-                  href={h.href}
-                  className={`group relative overflow-hidden rounded-2xl border border-white/8 bg-[#111111] p-5 flex flex-col gap-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:shadow-[0_4px_24px_rgba(0,0,0,0.4)] ${h.featured ? "md:col-span-2" : "md:col-span-1"}`}
-                >
-                  {/* Dot pattern */}
+              const cardClass = `group relative overflow-hidden rounded-2xl border border-white/8 bg-[#111111] p-5 flex flex-col gap-5 transition-all duration-300 ${h.featured ? "md:col-span-2" : "md:col-span-1"} ${disponible ? "hover:-translate-y-0.5 hover:border-white/15 hover:shadow-[0_4px_24px_rgba(0,0,0,0.4)]" : "cursor-not-allowed opacity-60"}`;
+              const inner = (
+                <>
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[length:4px_4px]" />
-
-                  {/* Top row */}
                   <div className="flex items-start justify-between relative z-10">
                     <div className="w-9 h-9 rounded-xl bg-white/8 flex items-center justify-center">
                       <Icon size={17} weight="light" className="text-white/60" />
@@ -71,21 +113,26 @@ export default function ToolsPage() {
                       {h.estado}
                     </span>
                   </div>
-
-                  {/* Content */}
                   <div className="flex flex-col gap-2 relative z-10 flex-1">
                     <h2 className="font-semibold text-white text-[15px]">{h.nombre}</h2>
                     <p className="text-sm text-white/45 leading-snug">{h.descripcion}</p>
                   </div>
-
-                  {/* CTA */}
                   <div className="flex items-center gap-2 relative z-10">
                     <span className="text-sm text-white/35 group-hover:text-white/70 transition-colors">Abrir herramienta</span>
                     <div className="w-5 h-5 rounded-full bg-white/8 flex items-center justify-center group-hover:translate-x-0.5 group-hover:bg-white/14 transition-all">
                       <ArrowUpRight size={11} weight="bold" className="text-white/40" />
                     </div>
                   </div>
+                </>
+              );
+              return disponible ? (
+                <Link key={h.nombre} href={h.href} className={cardClass}>
+                  {inner}
                 </Link>
+              ) : (
+                <div key={h.nombre} className={cardClass}>
+                  {inner}
+                </div>
               );
             })}
           </div>
