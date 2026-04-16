@@ -21,7 +21,7 @@ export function Nav() {
     <header className="fixed top-0 inset-x-0 z-50 flex justify-center px-4 pt-5">
       <nav className="w-full max-w-5xl flex items-center justify-between px-5 py-2.5 rounded-full bg-white/5 backdrop-blur-md border border-white/8 shadow-[0_1px_30px_rgba(0,0,0,0.4)]">
         <Link href="/" className="flex items-center">
-          <Image src="/logo.png" alt="Ecom Circle by Nain" width={120} height={40} className="h-9 w-auto" />
+          <Image src="/logo.png" alt="Ecom Circle by Nain" width={200} height={48} className="h-8 w-auto" />
         </Link>
 
         <ul className="hidden md:flex items-center gap-6">
@@ -38,7 +38,7 @@ export function Nav() {
           href="/#unirse"
           className="hidden md:flex items-center gap-2 bg-[#FF5911] text-white text-sm font-semibold rounded-full px-5 py-2 hover:bg-[#FF5911]/85 transition-all duration-200 active:scale-95"
         >
-          Unirse ahora
+          Unirse a VIP gratis
           <span className="w-5 h-5 rounded-full bg-black/15 flex items-center justify-center text-xs">↗</span>
         </a>
 
@@ -55,7 +55,7 @@ export function Nav() {
             </Link>
           ))}
           <a href="/#unirse" onClick={() => setOpen(false)} className="mt-1 w-full text-center bg-[#FF5911] text-white text-sm font-semibold rounded-full px-5 py-2.5">
-            Unirse ahora ↗
+            Unirse a VIP gratis ↗
           </a>
         </div>
       )}

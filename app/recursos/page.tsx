@@ -1,16 +1,24 @@
 import Link from "next/link";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/sections/footer";
-import { ArrowUpRight, Robot } from "@phosphor-icons/react/dist/ssr";
+import { ArrowUpRight, Robot, Layout } from "@phosphor-icons/react/dist/ssr";
 
 const recursos = [
+  {
+    href: "/recursos/flujo-landing-pages",
+    icon: Layout,
+    nombre: "Flujo de landing pages — 9 secciones con Freepik Space",
+    descripcion: "Plantilla completa de landing page de 9 secciones lista para usar en Freepik Space. Incluye instrucciones paso a paso y cómo incrustar un video de YouTube.",
+    estado: "Disponible",
+    featured: true,
+  },
   {
     href: "#",
     icon: Robot,
     nombre: "Skill de Claude para Dropi",
     descripcion: "Skill personalizado para Claude que te ayuda a operar tu tienda en Dropi más rápido: fichas, seguimiento y respuestas.",
     estado: "En construcción",
-    featured: true,
+    featured: false,
   },
   {
     href: "#",
