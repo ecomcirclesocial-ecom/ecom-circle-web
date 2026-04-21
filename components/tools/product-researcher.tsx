@@ -119,8 +119,11 @@ export function ProductResearcher() {
     if (imagen) fd.append("imagen", imagen);
     try {
       const res = await fetch("/api/research", { method: "POST", body: fd });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error del servidor");
       setResultado(data.resultado);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");

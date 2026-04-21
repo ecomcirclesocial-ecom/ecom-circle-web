@@ -65,7 +65,6 @@ export async function POST(req: NextRequest) {
 
     if (model === "jiminy") {
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-      const gemini = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const parts: any[] = [];
@@ -78,9 +77,30 @@ export async function POST(req: NextRequest) {
 
       parts.push(prompt);
 
+      const PRIMARY_MODEL = "gemini-3.1-pro-preview";
+      const FALLBACK_MODEL = "gemini-2.5-flash";
+
+      let lastError: unknown;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const gemini = genAI.getGenerativeModel({ model: PRIMARY_MODEL });
+          const result = await gemini.generateContent(parts);
+          const text = result.response.text();
+          return NextResponse.json({ resultado: text });
+        } catch (err: unknown) {
+          const status = (err as { status?: number })?.status;
+          if (status !== 503) throw err;
+          lastError = err;
+          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+        }
+      }
+
+      // Fallback tras 3 intentos fallidos con 503
+      console.warn("Gemini primario no disponible, usando fallback:", lastError);
+      const gemini = genAI.getGenerativeModel({ model: FALLBACK_MODEL });
       const result = await gemini.generateContent(parts);
       const text = result.response.text();
-      return NextResponse.json({ resultado: text });
+      return NextResponse.json({ resultado: text, usedFallback: true });
     }
 
     if (model === "claude") {
@@ -100,7 +120,7 @@ export async function POST(req: NextRequest) {
       content.push({ type: "text", text: prompt });
 
       const message = await client.messages.create({
-        model: "claude-opus-4-6",
+        model: "claude-sonnet-4-6",
         max_tokens: 8000,
         messages: [{ role: "user", content }],
       });
