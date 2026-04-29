@@ -1,6 +1,6 @@
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/sections/footer";
-import { ArrowUpRight, ArrowLeft, NumberOne, NumberTwo, NumberThree, NumberFour, NumberFive, NumberSix, YoutubeLogo } from "@phosphor-icons/react/dist/ssr";
+import { ArrowUpRight, ArrowLeft, NumberOne, NumberTwo, NumberThree, NumberFour, NumberFive, NumberSix } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 const LINK_FREEPIK_SPACE = "https://www.freepik.es/pikaso/spaces/a17ce684-50f8-401a-ac60-ce8f83d4408d/invite?payload=eyJpdiI6IlJCOTFDQzdkVlRzdElBNlV0UE1RcFE9PSIsInZhbHVlIjoiWUFZc1Iwa21vRUc2NStmUUZSZlgyc2ZiTWh1NUpEOTZLcXV2L1FsTnJCV1hZMjFoUVVLQi9kM1NqZEg3UWU2SDlTZXAwMlhvay9KWXB6dGZCSUNBS1cwZGNxMmNVTTcwQmdGOThiUDVtMEl4T3llbXEvUU16cmJIck9zUU9FU3UiLCJtYWMiOiI5NDRkOWVkNjgxNTkzMDk1NjdmNDJkNGI4Y2I3NDU2NmY4YWYyNWE2MmQ0MDI3N2E5NmJiZGI1NGYzOTRhMjk1IiwidGFnIjoiIn0%3D";
@@ -53,18 +53,20 @@ export default function FlujoLandingPages() {
             </p>
           </div>
 
-          {/* CTA principal */}
-          <a
-            href={LINK_FREEPIK_SPACE}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center justify-center gap-3 w-full bg-[#FF5911] text-white font-bold rounded-full py-4 hover:bg-[#FF5911]/85 transition-all duration-200 active:scale-[0.98] text-sm mb-10"
-          >
-            Abrir Freepik Space
-            <span className="w-6 h-6 rounded-full bg-black/15 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
-              <ArrowUpRight size={12} weight="bold" />
-            </span>
-          </a>
+          {/* Video tutorial */}
+          <div className="rounded-2xl overflow-hidden border border-white/8 mb-10">
+            <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src="https://www.youtube.com/embed/lRhWYJIKtgk?si=mFf-AWfSnT3qHHKi"
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+          </div>
 
           {/* Pasos */}
           <div className="mb-3">
@@ -83,22 +85,18 @@ export default function FlujoLandingPages() {
             ))}
           </div>
 
-          {/* Tip YouTube */}
-          <div className="flex gap-4 items-start p-5 rounded-2xl bg-[#FF5911]/8 border border-[#FF5911]/20">
-            <YoutubeLogo size={20} className="text-[#FF5911] shrink-0 mt-0.5" weight="fill" />
-            <div>
-              <p className="text-white font-semibold text-sm mb-1">Código iframe para YouTube</p>
-              <p className="text-white/50 text-xs leading-relaxed mb-3">
-                Ve al video en YouTube → Compartir → Insertar → copia el código. Luce así:
-              </p>
-              <code className="block bg-black/40 border border-white/8 rounded-xl px-4 py-3 text-[11px] text-white/50 leading-relaxed break-all">
-                {`<iframe width="560" height="315" src="https://www.youtube.com/embed/VIDEO_ID" frameborder="0" allowfullscreen></iframe>`}
-              </code>
-              <p className="text-white/30 text-xs mt-3">
-                Reemplaza <span className="text-white/50">VIDEO_ID</span> por el ID de tu video (los caracteres después de <span className="text-white/50">?v=</span> en la URL).
-              </p>
-            </div>
-          </div>
+          {/* CTA principal */}
+          <a
+            href={LINK_FREEPIK_SPACE}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center justify-center gap-3 w-full bg-[#FF5911] text-white font-bold rounded-full py-4 hover:bg-[#FF5911]/85 transition-all duration-200 active:scale-[0.98] text-sm"
+          >
+            Abrir Freepik Space
+            <span className="w-6 h-6 rounded-full bg-black/15 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
+              <ArrowUpRight size={12} weight="bold" />
+            </span>
+          </a>
 
         </section>
       </main>

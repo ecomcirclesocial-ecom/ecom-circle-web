@@ -14,9 +14,19 @@ type Angle = { nombre: string; descripcion: string };
 type Palette = { nombre: string; fondo: string; primario: string; acento: string; sensacion: string };
 
 const TIEMPO_ESTIMADO: Record<Model, { segundos: number; etiqueta: string }> = {
-  jiminy: { segundos: 60, etiqueta: "~1 minuto" },
-  claude: { segundos: 150, etiqueta: "~2 minutos" },
+  jiminy: { segundos: 120, etiqueta: "~2 minutos" },
+  claude: { segundos: 180, etiqueta: "~3 minutos" },
 };
+
+const PAISES = [
+  { value: "colombia", label: "🇨🇴 Colombia", moneda: "COP" },
+  { value: "mexico", label: "🇲🇽 México", moneda: "MXN" },
+  { value: "argentina", label: "🇦🇷 Argentina", moneda: "ARS" },
+  { value: "chile", label: "🇨🇱 Chile", moneda: "CLP" },
+  { value: "peru", label: "🇵🇪 Perú", moneda: "PEN" },
+  { value: "ecuador", label: "🇪🇨 Ecuador", moneda: "USD" },
+  { value: "espana", label: "🇪🇸 España", moneda: "EUR" },
+];
 
 const SEP = "══════════════════════════════════════════════";
 
@@ -49,6 +59,7 @@ export function ProductResearcher() {
   const [imagen, setImagen] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
+  const [pais, setPais] = useState("colombia");
   const [modelo, setModelo] = useState<Model>("jiminy");
   const [info, setInfo] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -115,13 +126,13 @@ export function ProductResearcher() {
     if (!nombre.trim()) return;
     setCargando(true); setResultado(null); setError(null);
     const fd = new FormData();
-    fd.append("model", modelo); fd.append("nombre", nombre.trim()); fd.append("info", info.trim());
+    fd.append("model", modelo); fd.append("nombre", nombre.trim()); fd.append("info", info.trim()); fd.append("pais", pais);
     if (imagen) fd.append("imagen", imagen);
     try {
       const res = await fetch("/api/research", { method: "POST", body: fd });
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text);
+        const body = await res.json().catch(() => ({ error: "Error del servidor" }));
+        throw new Error(body.error || "Error del servidor");
       }
       const data = await res.json();
       setResultado(data.resultado);
@@ -135,7 +146,7 @@ export function ProductResearcher() {
   function parsearResultado(texto: string) {
     const limpio = texto.replace(/\*\*/g, "").replace(/\*/g, "").replace(/__/g, "");
     const secciones: { titulo: string; contenido: string }[] = [];
-    const regex = /^(\d+\.\s+[A-ZÁÉÍÓÚÑ\s\/\(\)\-]+?):\s*([\s\S]*?)(?=^\d+\.\s+[A-ZÁÉÍÓÚÑ\s\/\(\)\-]+?:|$)/gm;
+    const regex = /^(\d+\.\s+[A-ZÁÉÍÓÚÑ\w\s\/\(\)\-\[\]#:]+?)[\n:]\s*([\s\S]*?)(?=^\d+\.\s+[A-ZÁÉÍÓÚÑ\w\s\/\(\)\-\[\]#:]+?[\n:]|^══|^PARTE\s+\d|$)/gm;
     let match;
     while ((match = regex.exec(limpio)) !== null) {
       const contenido = match[2].trim();
@@ -517,11 +528,11 @@ export function ProductResearcher() {
                 Gemini 3.1 Pro
               </button>
               <button type="button" onClick={() => setFreepikModel("claude")} className={`py-2 rounded-lg text-sm font-medium transition-all ${freepikModel === "claude" ? "bg-[#FF5911] text-white" : "text-white/40 hover:text-white/70"}`}>
-                Claude Opus 4.6
+                Claude Opus 4.7
               </button>
             </div>
             <p className="text-xs text-white/25 mt-1.5">
-              {freepikModel === "jiminy" ? "Gemini 3.1 Pro — rápido, ~1 minuto" : "Claude Opus 4.6 — máxima profundidad, ~2 minutos"}
+              {freepikModel === "jiminy" ? "Gemini 3.1 Pro (fallback a 2.5 Pro)" : "Claude Opus 4.7"}
             </p>
           </div>
 
@@ -594,6 +605,32 @@ export function ProductResearcher() {
             />
           </div>
 
+          {/* País */}
+          <div>
+            <label className="block text-xs tracking-widest uppercase text-white/40 mb-2">
+              País de la investigación <span className="text-[#FF5911]">*</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {PAISES.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => setPais(p.value)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    pais === p.value
+                      ? "bg-[#FF5911] text-white"
+                      : "bg-white/8 text-white/50 border border-white/10 hover:bg-white/12"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-white/25 mt-2">
+              La investigación incluirá precios en {PAISES.find((p) => p.value === pais)?.moneda}, competidores locales y datos de Mercado Libre del país seleccionado.
+            </p>
+          </div>
+
           {/* Modelo */}
           <div>
             <label className="block text-xs tracking-widest uppercase text-white/40 mb-2">Modelo de IA</label>
@@ -602,11 +639,11 @@ export function ProductResearcher() {
                 Gemini 3.1 Pro
               </button>
               <button type="button" onClick={() => setModelo("claude")} className={`py-2 rounded-lg text-sm font-medium transition-all ${modelo === "claude" ? "bg-[#FF5911] text-white" : "text-white/40 hover:text-white/70"}`}>
-                Claude Opus 4.6
+                Claude Opus 4.7
               </button>
             </div>
             <p className="text-xs text-white/25">
-              {modelo === "jiminy" ? "Usando gemini-3.1-pro-preview — el más avanzado de Google" : "Usando claude-opus-4-6 — máxima profundidad de análisis"}
+              {modelo === "jiminy" ? "Gemini 3.1 Pro (fallback a 2.5 Pro)" : "Claude Opus 4.7"}
             </p>
           </div>
 
@@ -632,7 +669,7 @@ export function ProductResearcher() {
           {cargando ? (
             <div className="flex flex-col gap-3 py-1">
               <div className="flex items-center justify-between text-xs text-white/40">
-                <span>Analizando 30 secciones...</span>
+                <span>Scraping de mercado + 30 secciones detalladas...</span>
                 <span>{progreso}%</span>
               </div>
               <div className="w-full h-1.5 bg-white/8 rounded-full overflow-hidden">

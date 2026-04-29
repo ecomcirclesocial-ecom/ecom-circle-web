@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { ToolsHelpWidget } from "@/components/tools-help-widget";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -30,6 +31,7 @@ export default function RootLayout({
     <html lang="es" className={`${inter.variable} antialiased`}>
       <body className="min-h-[100dvh] bg-[#0A0A0A] text-white font-[family-name:var(--font-inter)]">
         {children}
+        <ToolsHelpWidget />
       </body>
     </html>
   );

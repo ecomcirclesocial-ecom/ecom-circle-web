@@ -51,16 +51,32 @@ function calcular(p: typeof DEFAULTS.colombia) {
   return { margenBruto, totalCostos, liquidacion, filas };
 }
 
+function fmtInput(n: number) {
+  if (!n && n !== 0) return "";
+  return Math.round(n).toLocaleString("es-CO");
+}
+
+
 function InputField({ label, value, onChange, prefix }: { label: string; value: number; onChange: (v: number) => void; prefix?: string }) {
+  const [focused, setFocused] = useState(false);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value.replace(/[^0-9]/g, "");
+    onChange(raw === "" ? 0 : Number(raw));
+  }
+
   return (
     <div className="flex flex-col gap-1.5">
       <label className="text-[10px] tracking-widest uppercase text-white/40">{label}</label>
       <div className="relative">
         {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-sm">{prefix}</span>}
         <input
-          type="number"
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
+          type="text"
+          inputMode="numeric"
+          value={focused ? (value === 0 ? "" : String(value)) : fmtInput(value)}
+          onChange={handleChange}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           className={`w-full bg-[#1a1a1a] border border-white/10 rounded-xl text-white text-sm py-3 focus:outline-none focus:ring-2 focus:ring-[#FF5911]/40 focus:border-[#FF5911]/50 ${prefix ? "pl-7 pr-4" : "px-4"}`}
         />
       </div>
