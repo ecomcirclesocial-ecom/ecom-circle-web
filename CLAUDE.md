@@ -4,6 +4,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Acceso al wiki
+
+Este proyecto vive dentro del Second Brain. El conocimiento está en `../wiki/`:
+- `../wiki/entities/Ecom Circle — Comunidad.md` — contexto del negocio
+- `../wiki/entities/Marca Personal.md` — pilares de contenido
+- `../wiki/index.md` — índice de todas las páginas
+
+---
+
 ## Qué es este proyecto
 
 Hub central del ecosistema **Ecom Circle** — Comunidad #1 de Ecommerce y dropshipping 100% con IA en LATAM, fundada por **Nain Guevara** (23 años, Cali, Colombia). +$3.1M USD facturados.

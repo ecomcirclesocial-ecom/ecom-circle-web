@@ -43,6 +43,60 @@ Responde SOLO con JSON: {"opciones":["opcion1","opcion2","opcion3"]}`
       }
     }
 
+    if (tipo === "propuesta") {
+      const { producto, problema, caracteristicas, beneficios, precio1, precio2, precio3, nombreAgente, enfoque } = datos;
+      const msg = await client.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 800,
+        messages: [{
+          role: "user",
+          content: `Eres experto en bots de ventas por WhatsApp para dropshipping en Colombia/LATAM.
+
+PRODUCTO: ${producto}
+PROBLEMA: ${problema}
+NICHO: ${enfoque}
+CARACTERÍSTICAS: ${caracteristicas}
+BENEFICIOS: ${beneficios}
+PRECIOS: ${precio1}${precio2 ? ` / ${precio2}` : ""}${precio3 ? ` / ${precio3}` : ""}
+NOMBRE BOT: ${nombreAgente}
+
+Analiza si el producto tiene TALLAS o COLORES basándote en las características.
+
+Genera una propuesta para el mensaje inicial del bot. Responde SOLO con JSON:
+{
+  "tieneTalla": true/false,
+  "tieneColor": true/false,
+  "nichoDetectado": "uno de: regalo, bebe, mascotas, hogar, calzado, fitness, belleza, tecnologia, general",
+  "mensajeInicial": "mensaje corto de bienvenida a la tienda (máx 60 caracteres, con emoji)",
+  "multimedia": [
+    {"orden": 1, "tipo": "imagen", "descripcion": "qué debe mostrar esta imagen"},
+    {"orden": 2, "tipo": "imagen", "descripcion": "..."},
+    {"orden": 3, "tipo": "video", "descripcion": "video UGC mostrando..."}
+  ],
+  "preguntaEntrada": "pregunta de apertura adaptada al nicho (máx 60 caracteres, con emoji)",
+  "preguntasAlternativas": ["opción 2", "opción 3"]
+}
+
+REGLAS para preguntaEntrada:
+- Si tiene COLOR: "¿Qué colorsito te gustó más? 😊" (prioridad sobre talla)
+- Si tiene TALLA sin color: "¿Qué tallita estás buscando?"
+- Nicho regalo: "¿Es para ti o es un regalito? 🎁"
+- Nicho bebé: "¿Qué edadcita tiene el bebé? 👶"
+- Nicho mascotas: "¿Es para perro o para gato? 🐾"
+- Nicho hogar: "¿Es para cama doble, sencilla o cámara? 🛏️"
+- Nicho calzado: "¿La tallita es de adulto o de niño? 👟"
+- Genérica: "¿En qué ciudad te encuentras para ver si aplicas para envío gratis? 😊"`
+        }]
+      });
+      const text = (msg.content[0] as { type: string; text: string }).text;
+      const clean = text.replace(/```(?:json)?\n?/g, "").trim();
+      try {
+        return NextResponse.json(JSON.parse(clean));
+      } catch {
+        return NextResponse.json({ error: "Respuesta inválida del modelo" }, { status: 500 });
+      }
+    }
+
     if (tipo === "imagen") {
       const { base64, mediaType } = datos;
 

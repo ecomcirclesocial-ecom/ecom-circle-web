@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} antialiased`}>
+    <html lang="es" className={`${inter.variable} antialiased`} suppressHydrationWarning>
       <body className="min-h-[100dvh] bg-[#0A0A0A] text-white font-[family-name:var(--font-inter)]">
         {children}
         <ToolsHelpWidget />

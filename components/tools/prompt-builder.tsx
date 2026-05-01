@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Copy, Check, ArrowRight, ArrowLeft, Sparkle, Image as ImgIcon, PencilSimple } from "@phosphor-icons/react";
+import { Copy, Check, ArrowRight, ArrowLeft, Image as ImgIcon, PencilSimple, Link } from "@phosphor-icons/react";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 type Flujo = "AIDA" | "PAS" | "OBC" | "HOOK";
-type ModoInput = "manual" | "imagen";
-type ModoApertura = "ia" | "manual";
+type ModoInput = "manual" | "imagen" | "url";
 
 interface FormData {
   nombreAgente: string;
@@ -17,25 +16,27 @@ interface FormData {
   problema: string;
   caracteristicas: string;
   beneficios: string;
-  tieneTalla: boolean;
   precio1: string;
   precio2: string;
   precio3: string;
   entrega: string;
   pago: string;
   flujo: Flujo;
-  modoApertura: ModoApertura;
-  aperturaSeleccionada: string;
-  aperturaManual: string;
+  estructura: 1 | 2 | 3;
+  mensajeInicial: string;
+  multimedia: { orden: number; tipo: string; descripcion: string }[];
+  preguntaEntrada: string;
   upsellProducto: string;
   upsellPrecio: string;
 }
 
 const INIT: FormData = {
   nombreAgente: "", enfoque: "", metodo: "El Confidente", tono: "cálido, cercano y seguro",
-  producto: "", problema: "", caracteristicas: "", beneficios: "", tieneTalla: false,
-  precio1: "", precio2: "", precio3: "", entrega: "4-6 días hábiles", pago: "Pago contra entrega",
-  flujo: "AIDA", modoApertura: "ia", aperturaSeleccionada: "", aperturaManual: "",
+  producto: "", problema: "", caracteristicas: "", beneficios: "",
+  precio1: "", precio2: "", precio3: "",
+  entrega: "Ciudades principales 2-3 días · Resto del país 2-6 días",
+  pago: "Pago contra entrega para mayor seguridad",
+  flujo: "AIDA", estructura: 1, mensajeInicial: "", multimedia: [], preguntaEntrada: "",
   upsellProducto: "", upsellPrecio: "",
 };
 
@@ -71,8 +72,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 // ─── Generador de prompt final ────────────────────────────────────────────────
 function buildPrompt(d: FormData): string {
-  const apertura = d.modoApertura === "manual" ? d.aperturaManual : d.aperturaSeleccionada;
-  const precios = `🔥 1 unidad → ${d.precio1}${d.precio2 ? `\n🔥🔥 Combo 2 unidades → ${d.precio2}` : ""}${d.precio3 ? `\n🔥🔥🔥 Combo 3 unidades → ${d.precio3}` : ""}`;
+  const precios = `🔥 1 unidad → ${d.precio1} (Pago contra entrega, sin adelantos 💛)${d.precio2 ? `\n🔥🔥 Combo 2 unidades → ${d.precio2} (Pago contra entrega, sin adelantos 💛)` : ""}${d.precio3 ? `\n🔥🔥🔥 Combo 3 unidades → ${d.precio3} (Pago contra entrega, sin adelantos 💛)` : ""}`;
 
   const bloqueBase = `# =====================
 # BLOQUE BASE
@@ -112,11 +112,11 @@ ${d.beneficios}`;
 *[!IMPORTANTE]:* AIDA = Atención → Interés → Deseo → Acción.
 El objetivo: que el cliente sienta que *no comprar* sería perder una oportunidad.
 
-**PRIMER MENSAJE DEL BOT:**
-CHATBOT: "${apertura}"
+**PREGUNTA DE ENTRADA:**
+"${d.preguntaEntrada}"
 
 ### Etapa 1 — ATENCIÓN
-CLIENTE: [Responde con curiosidad o confirmando el problema de ${d.problema}]
+CLIENTE: [Responde a la pregunta de entrada]
 CHATBOT: [Valida con empatía 💛, menciona que conoces ese problema y que encontraste la solución. Genera curiosidad. Máx. 30 palabras.]
 
 ### Etapa 2 — INTERÉS
@@ -124,7 +124,7 @@ CLIENTE: [Muestra interés, pide más información]
 CHATBOT: [Profundiza en el problema con preguntas de descubrimiento. ¿Cuándo ocurre? ¿Con qué frecuencia? No menciones el producto aún. Usa emojis cálidos 😊. Máx. 30 palabras.]
 
 CLIENTE: [Describe su situación con más detalle]
-CHATBOT: [Reformula con empatía lo que describió. Hazle sentir comprendido 💛. Dile que tienes algo que puede cambiar eso. Genera expectativa. Máx. 30 palabras.]
+CHATBOT: [Reformula con empatía. Dile "¿Tienes alguna otra dudita o te presentamos los precios de promoción?" 💛. Máx. 30 palabras.]
 
 ### Etapa 3 — DESEO
 CLIENTE: [Quiere saber de qué se trata la solución]
@@ -135,7 +135,7 @@ CHATBOT: [Refuerza con el beneficio más poderoso. Añade garantía o prueba soc
 
 ### Etapa 4 — ACCIÓN
 CLIENTE: [Pregunta el precio o dice que le interesa comprar]
-CHATBOT: [Presenta precios como inversión. "La inversión para resolver ${d.problema} es solo ${d.precio1}, pagas al recibirlo 💛". Presenta las 3 opciones con emojis. Pregunta cuál quiere.]
+CHATBOT: [Presenta precios como inversión. "La inversión para resolver ${d.problema} es solo ${d.precio1}, pagas al recibirlo 💛". Presenta las opciones con emojis. Pregunta: "¿Tienes alguna otra dudita o seguimos con el pedido?"]
 
 CLIENTE: [Elige una opción]
 → Ir a ETAPA DE CIERRE`,
@@ -148,11 +148,11 @@ CLIENTE: [Elige una opción]
 *[!IMPORTANTE]:* PAS = Problem → Agitate → Solution.
 El objetivo: tocar el dolor, intensificarlo y presentar la solución con precio en máximo 3 mensajes.
 
-**PRIMER MENSAJE DEL BOT:**
-CHATBOT: "${apertura}"
+**PREGUNTA DE ENTRADA:**
+"${d.preguntaEntrada}"
 
 ### Etapa 1 — PROBLEM (Tocar el dolor)
-CLIENTE: [Saluda o describe su problema]
+CLIENTE: [Responde a la pregunta de entrada]
 CHATBOT: [Pregunta empática que toque el dolor principal en 1 línea. Confirma que conoces esa frustración. Máx. 30 palabras. Usa emoji 😊]
 
 ### Etapa 2 — AGITATE (Intensificar)
@@ -160,7 +160,7 @@ CLIENTE: [Confirma el problema o responde]
 CHATBOT: [Intensifica el dolor en 1 línea: lo que se pierde por no resolverlo, lo frustrante que es. Luego transición: "pero tranqui, por eso estás aquí". Máx. 30 palabras.]
 
 ### Etapa 3 — SOLUTION (Solución + Precio)
-CHATBOT: [Presenta ${d.producto} con 2 beneficios clave + los precios con emojis + "pagas al recibir, sin adelantos 💛" + "¿Cuál te aparto?"]
+CHATBOT: [Presenta ${d.producto} con 2 beneficios clave + los precios con emojis + "pagas al recibir, sin adelantos 💛" + "¿Tienes alguna otra dudita o seguimos con el pedido?"]
 ${precios}
 
 CLIENTE: [Elige una opción]
@@ -174,17 +174,17 @@ CLIENTE: [Elige una opción]
 *[!IMPORTANTE]:* OBC = Offer → Benefits → Close.
 El objetivo: dar precio inmediato, reforzar con beneficios solo si pregunta, y cerrar lo más rápido posible.
 
-**PRIMER MENSAJE DEL BOT:**
-CHATBOT: "${apertura}"
+**PREGUNTA DE ENTRADA:**
+"${d.preguntaEntrada}"
 
 ### Etapa 1 — OFFER (Oferta directa)
 CLIENTE: [Pregunta precio: "cuánto cuesta?", "precio?"]
-CHATBOT: [Saludo corto + presenta los precios con emojis inmediatamente + "pagas cuando te llegue, sin adelantos 💛". Máx. 40 palabras.]
+CHATBOT: [Saludo corto + presenta los precios con emojis inmediatamente + "pagas cuando te llegue, sin adelantos 💛" + "¿Tienes alguna otra dudita o seguimos con el pedido?". Máx. 40 palabras.]
 ${precios}
 
 ### Etapa 2 — BENEFITS (Solo si el cliente pregunta)
 CLIENTE: [Pregunta si funciona, pide más info, duda]
-CHATBOT: [3 beneficios clave en 1 mensaje + prueba social + "¿Cuál te aparto?" Máx. 40 palabras.]
+CHATBOT: [3 beneficios clave en 1 mensaje + prueba social + "¿Te aparto?" Máx. 40 palabras.]
 
 [!IMPORTANTE]: Si el cliente elige directamente después del precio SIN preguntar, salta Etapa 2 y ve directo al cierre.
 
@@ -198,12 +198,12 @@ CLIENTE: [Elige una opción]
 
 *[!IMPORTANTE]:* El anuncio ya hizo el trabajo de venta. El bot solo tiene que NO ESTORBAR la compra.
 
-**PRIMER MENSAJE DEL BOT:**
-CHATBOT: "${apertura}"
+**PREGUNTA DE ENTRADA:**
+"${d.preguntaEntrada}"
 
 ### Etapa 1 — HOOK (Enganchar con urgencia + Precio)
 CLIENTE: [Menciona el anuncio: "vi el anuncio", "vi tu publicación"]
-CHATBOT: [Saludo + gancho de urgencia/escasez: "llegaste justo, es la más vendida y quedan pocas" + los precios con emojis + "pagas al recibir, $0 adelanto 💛". Máx. 40 palabras.]
+CHATBOT: [Saludo + gancho de urgencia/escasez: "llegaste justo, es la más vendida y quedan pocas" + los precios con emojis + "pagas al recibir, $0 adelanto 💛" + "¿Tienes alguna otra dudita o seguimos con el pedido?". Máx. 40 palabras.]
 ${precios}
 
 ### Etapa 2 — PRUEBA SOCIAL (Solo si el cliente duda)
@@ -227,7 +227,7 @@ CLIENTE: [Dice cuál opción quiere]
 CHATBOT:
 "Perfecto! 😊 Para procesar tu pedido, envíame estos datos:
 📌 Nombre y apellido: 😊
-📌 Teléfono: 📞${d.tieneTalla ? "\n📌 Talla/color: {la que ya escogió}" : ""}
+📌 Teléfono: 📞
 📌 Departamento: 🌄
 📌 Ciudad: 🏙
 📌 Barrio: 🏡
@@ -235,7 +235,7 @@ CHATBOT:
 
 ### Paso 2 — Confirmar datos
 CLIENTE: [Envía sus datos]
-CHATBOT: [Enlista los datos EXACTOS y pregunta si están correctos. Confirma el valor total y el tiempo de entrega ${d.entrega}. 🎉]
+CHATBOT: [Enlista los datos EXACTOS y pregunta si están correctos. Confirma el valor total y el tiempo de entrega (${d.entrega}). 🎉]
 
 ### Paso 3 — Cerrar pedido
 CLIENTE: [Confirma que los datos están correctos]
@@ -263,7 +263,8 @@ CHATBOT: "Un último consejo 😊: aprovecha el *${d.upsellProducto}* por solo *
 4. No cierres si falta algún dato de envío.
 5. Usa emojis para dar calidez.
 6. NUNCA des más información de la necesaria si el cliente ya quiere comprar.
-7. Si el cliente envía audio o imagen: "Disculpa, por el momento solo puedo leer mensajes de texto 😊 ¿Me lo puedes escribir?"`;
+7. Si el cliente envía audio o imagen: "Disculpa, por el momento solo puedo leer mensajes de texto 😊 ¿Me lo puedes escribir?"
+8. NO COQUETEES con el cliente. Una vez hecho el pedido, limítate a responder solo preguntas del pedido, nada personal ni coqueteo.`;
 
   return `${bloqueBase}\n${flujos[d.flujo]}${bloqueCierre}`;
 }
@@ -276,18 +277,58 @@ const FLUJOS: { val: Flujo; icono: string; nombre: string; desc: string; tag: st
   { val: "HOOK", icono: "🚀", nombre: "HOOK→PRECIO→PS", desc: "Hook + Precio + Prueba Social. Para clientes que vienen calientes del anuncio.", tag: "2 msgs · 0 preguntas" },
 ];
 
+// ─── Estructuras de mensaje inicial ───────────────────────────────────────────
+const ESTRUCTURAS = [
+  {
+    id: 1 as const,
+    nombre: "Secuencia completa",
+    tieneBienvenida: true,
+    multimedia: [
+      { tipo: "IMG", desc: "Promesa de valor (precio con descuento, beneficio principal)" },
+      { tipo: "IMG", desc: "Transformación (antes/después, resultado)" },
+      { tipo: "IMG", desc: "Lo que te llega / Review (opcional)" },
+      { tipo: "VIDEO", desc: "Video UGC (testimonial o demostración)" },
+    ],
+  },
+  {
+    id: 2 as const,
+    nombre: "Directo al contenido",
+    tieneBienvenida: true,
+    multimedia: [
+      { tipo: "IMG", desc: "Promesa de valor (precio con descuento, beneficio principal)" },
+      { tipo: "IMG", desc: "Transformación (antes/después, resultado)" },
+      { tipo: "IMG", desc: "Lo que te llega (opcional)" },
+      { tipo: "VIDEO", desc: "Video UGC (testimonial o demostración)" },
+    ],
+  },
+  {
+    id: 3 as const,
+    nombre: "Video primero",
+    tieneBienvenida: true,
+    multimedia: [
+      { tipo: "VIDEO", desc: "Video UGC (testimonial o demostración)" },
+      { tipo: "IMG", desc: "Promesa de valor (precio con descuento)" },
+      { tipo: "IMG", desc: "Transformación (antes/después)" },
+      { tipo: "IMG", desc: "Lo que te llega (opcional)" },
+      { tipo: "IMG", desc: "Review / Testimonios" },
+    ],
+  },
+];
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 export function PromptBuilder() {
   const [modo, setModo] = useState<ModoInput>("manual");
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(INIT);
-  const [aperturas, setAperturas] = useState<string[]>([]);
-  const [loadingApertura, setLoadingApertura] = useState(false);
   const [loadingImagen, setLoadingImagen] = useState(false);
   const [imagenPreview, setImagenPreview] = useState<string | null>(null);
   const [imagenAnalizada, setImagenAnalizada] = useState(false);
   const [imagenError, setImagenError] = useState(false);
   const [resumenImagen, setResumenImagen] = useState<{ publicoObjetivo?: string; camposLlenos: number } | null>(null);
+  const [urlInput, setUrlInput] = useState("");
+  const [loadingUrl, setLoadingUrl] = useState(false);
+  const [urlAnalizada, setUrlAnalizada] = useState(false);
+  const [urlError, setUrlError] = useState(false);
   const [promptFinal, setPromptFinal] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -295,6 +336,56 @@ export function PromptBuilder() {
   function set<K extends keyof FormData>(k: K, v: FormData[K]) {
     setForm((p) => ({ ...p, [k]: v }));
   }
+
+  // ── Generar campos al cambiar estructura ─────────────────────────────────────
+  const MENSAJE_DEFAULT = "Holaaa, Bienvenido a tu tienda de confianza! 🛒 En un minuto te estaremos atendiendo 👋";
+
+  function generarCamposEstructura(estructuraId: 1 | 2 | 3) {
+    const estructura = ESTRUCTURAS.find(e => e.id === estructuraId);
+    const estructuraActual = ESTRUCTURAS.find(e => e.id === form.estructura);
+
+    // Pregunta de entrada con estructura: Dolor → Beneficios → Precios → Pregunta
+    const beneficiosLista = form.beneficios
+      .split("\n")
+      .filter(b => b.trim())
+      .slice(0, 3)
+      .map(b => `✨ ${b.replace(/^-\s*/, "")}`)
+      .join("\n");
+
+    const preciosTexto = form.precio1
+      ? `🔥 1 unidad → ${form.precio1}${form.precio2 ? `\n🔥🔥 2 unidades → ${form.precio2}` : ""}${form.precio3 ? `\n🔥🔥🔥 3 unidades → ${form.precio3}` : ""}\n\n📦 ${form.pago}`
+      : "";
+
+    const preguntaEntrada = `¿${form.problema ? `Cansado de ${form.problema.toLowerCase()}` : "Te gustaría resolver este problema de una vez"}? 😔
+
+${beneficiosLista}
+
+${preciosTexto}
+
+¿Cuéntame en qué ciudad te encuentras para ver si tenemos envío gratis? 😊`;
+
+    setForm(p => {
+      let nuevoMensaje = p.mensajeInicial;
+
+      // Solo modificar mensaje si cambia el tipo de estructura (con/sin bienvenida)
+      if (estructura?.tieneBienvenida && !estructuraActual?.tieneBienvenida) {
+        // Cambia de sin bienvenida a con bienvenida: poner default
+        nuevoMensaje = MENSAJE_DEFAULT;
+      } else if (estructura?.tieneBienvenida && !p.mensajeInicial) {
+        // Tiene bienvenida pero está vacío: poner default
+        nuevoMensaje = MENSAJE_DEFAULT;
+      }
+      // Si no tiene bienvenida, el input no se muestra así que no importa el valor
+
+      return {
+        ...p,
+        estructura: estructuraId,
+        mensajeInicial: nuevoMensaje,
+        preguntaEntrada
+      };
+    });
+  }
+
 
   // ── Imagen ──────────────────────────────────────────────────────────────────
   async function handleImagen(e: React.ChangeEvent<HTMLInputElement>) {
@@ -313,12 +404,21 @@ export function PromptBuilder() {
       setImagenAnalizada(false);
       setImagenError(false);
       try {
-        const res = await fetch("/api/claude", {
+        const res = await fetch("/api/gemini", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tipo: "imagen", base64, mediaType }),
         });
         const data = await res.json();
+        console.log("Gemini response:", data);
+
+        if (!res.ok || data.error) {
+          console.error("API error:", data.error);
+          setImagenError(true);
+          setLoadingImagen(false);
+          return;
+        }
+
         const tonoMap: Record<string, string> = {
           "cálido, cercano y seguro": "cálido, cercano y seguro",
           "profesional y confiable": "profesional y confiable",
@@ -356,26 +456,61 @@ export function PromptBuilder() {
     reader.readAsDataURL(file);
   }
 
-  // ── Apertura con IA ──────────────────────────────────────────────────────────
-  async function generarAperturas() {
-    setLoadingApertura(true);
-    setAperturas([]);
+  // ── URL ─────────────────────────────────────────────────────────────────────
+  async function handleUrl() {
+    if (!urlInput.trim()) return;
+    setLoadingUrl(true);
+    setUrlAnalizada(false);
+    setUrlError(false);
     try {
-      const res = await fetch("/api/claude", {
+      const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tipo: "apertura",
-          producto: form.producto,
-          problema: form.problema,
-          tono: form.tono,
-          flujo: form.flujo,
-        }),
+        body: JSON.stringify({ tipo: "url", url: urlInput.trim() }),
       });
       const data = await res.json();
-      setAperturas(data.opciones || []);
-    } catch { /* silencio */ }
-    finally { setLoadingApertura(false); }
+
+      if (!res.ok || data.error) {
+        console.error("API error:", data.error);
+        setUrlError(true);
+        setLoadingUrl(false);
+        return;
+      }
+
+      const tonoMap: Record<string, string> = {
+        "cálido, cercano y seguro": "cálido, cercano y seguro",
+        "profesional y confiable": "profesional y confiable",
+        "energético y motivador": "energético y motivador",
+        "amigable y casual": "amigable y casual",
+      };
+      const tonoValido = tonoMap[data.tono] || "cálido, cercano y seguro";
+      const metodos = ["El Confidente", "FOMO", "Escasez", "Empatía Total"];
+      const metodoValido = metodos.includes(data.metodo) ? data.metodo : "El Confidente";
+
+      setForm((p) => ({
+        ...p,
+        producto: data.producto || p.producto,
+        problema: data.problema || p.problema,
+        caracteristicas: data.caracteristicas || p.caracteristicas,
+        beneficios: data.beneficios || p.beneficios,
+        precio1: data.precio1 || p.precio1,
+        precio2: data.precio2 || p.precio2,
+        precio3: data.precio3 || p.precio3,
+        nombreAgente: data.nombreAgente || p.nombreAgente,
+        enfoque: data.enfoque || p.enfoque,
+        metodo: metodoValido,
+        tono: tonoValido,
+      }));
+
+      const filled = [data.producto, data.problema, data.caracteristicas, data.beneficios,
+        data.precio1, data.nombreAgente, data.enfoque].filter(Boolean).length;
+      setResumenImagen({ publicoObjetivo: data.publicoObjetivo, camposLlenos: filled });
+      setUrlAnalizada(true);
+    } catch {
+      setUrlError(true);
+    } finally {
+      setLoadingUrl(false);
+    }
   }
 
   // ── Generar prompt final ─────────────────────────────────────────────────────
@@ -395,11 +530,13 @@ export function PromptBuilder() {
     setForm(INIT);
     setStep(1);
     setPromptFinal(null);
-    setAperturas([]);
     setImagenPreview(null);
     setImagenAnalizada(false);
     setImagenError(false);
     setResumenImagen(null);
+    setUrlInput("");
+    setUrlAnalizada(false);
+    setUrlError(false);
     setModo("manual");
   }
 
@@ -451,10 +588,11 @@ export function PromptBuilder() {
   return (
     <div className="flex flex-col gap-6">
       {/* Selector de modo */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {([
           { val: "manual", icono: <PencilSimple size={18} />, label: "Manual", desc: "Rellena los campos" },
           { val: "imagen", icono: <ImgIcon size={18} />, label: "Desde imagen", desc: "Sube foto del producto" },
+          { val: "url", icono: <Link size={18} />, label: "Desde URL", desc: "Pega link del producto" },
         ] as { val: ModoInput; icono: React.ReactNode; label: string; desc: string }[]).map((m) => (
           <button key={m.val} onClick={() => setModo(m.val)}
             className={`flex items-center gap-3 p-4 rounded-2xl border text-left transition-all ${modo === m.val ? "border-[#FF5911]/50 bg-[#FF5911]/8" : "border-white/6 bg-white/3 hover:border-white/12"}`}>
@@ -489,7 +627,7 @@ export function PromptBuilder() {
             <div className="flex items-center gap-3 p-4 rounded-xl bg-white/4 border border-white/8">
               <div className="w-5 h-5 border-2 border-[#FF5911] border-t-transparent rounded-full animate-spin flex-shrink-0" />
               <div>
-                <p className="text-sm font-bold text-white">Claude está analizando la imagen…</p>
+                <p className="text-sm font-bold text-white">Gemini está analizando la imagen…</p>
                 <p className="text-xs text-white/35">Extrayendo nombre, precio y características</p>
               </div>
             </div>
@@ -555,17 +693,117 @@ export function PromptBuilder() {
         </div>
       )}
 
+      {/* Modo URL */}
+      {modo === "url" && (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
+            <Field label="URL del producto">
+              <div className="flex gap-2">
+                <input
+                  className={input + " flex-1"}
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  placeholder="https://dropi.co/producto/..."
+                  onKeyDown={(e) => e.key === "Enter" && handleUrl()}
+                />
+                <button
+                  onClick={handleUrl}
+                  disabled={loadingUrl || !urlInput.trim()}
+                  className="px-5 py-3 rounded-xl bg-[#FF5911] text-white text-sm font-bold hover:bg-[#FF5911]/85 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loadingUrl ? "..." : "Analizar"}
+                </button>
+              </div>
+            </Field>
+            <p className="text-xs text-white/30">Pega el link de tu producto en Dropi, Shopify, o cualquier tienda</p>
+          </div>
+
+          {loadingUrl && (
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-white/4 border border-white/8">
+              <div className="w-5 h-5 border-2 border-[#FF5911] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-white">Analizando la página…</p>
+                <p className="text-xs text-white/35">Extrayendo información del producto</p>
+              </div>
+            </div>
+          )}
+
+          {urlAnalizada && (
+            <div className="flex flex-col gap-3 p-4 rounded-xl bg-emerald-500/8 border border-emerald-500/20">
+              <div className="flex items-center gap-3">
+                <span className="text-emerald-400 text-lg flex-shrink-0">✓</span>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-white">Investigación completada</p>
+                  <p className="text-xs text-white/40">{resumenImagen?.camposLlenos ?? 0} campos pre-rellenados automáticamente</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "Producto", val: form.producto },
+                  { label: "Agente sugerido", val: form.nombreAgente },
+                  { label: "Nicho", val: form.enfoque },
+                  { label: "Método", val: form.metodo },
+                  { label: "Problema", val: form.problema },
+                  { label: "Precio 1", val: form.precio1 },
+                ].map((r) => r.val ? (
+                  <div key={r.label} className="flex items-start gap-2 p-2 rounded-lg bg-white/4">
+                    <span className="text-emerald-400 text-xs mt-0.5">✓</span>
+                    <div>
+                      <p className="text-[10px] text-white/30 uppercase tracking-wider">{r.label}</p>
+                      <p className="text-xs text-white/70 leading-snug">{r.val}</p>
+                    </div>
+                  </div>
+                ) : null)}
+              </div>
+              {resumenImagen?.publicoObjetivo && (
+                <div className="p-3 rounded-lg bg-[#FF5911]/6 border border-[#FF5911]/15">
+                  <p className="text-[10px] text-[#FF5911]/60 uppercase tracking-wider mb-1">Cliente ideal</p>
+                  <p className="text-xs text-white/55">{resumenImagen.publicoObjetivo}</p>
+                </div>
+              )}
+              <button onClick={() => continuarDesdeImagen(form)}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#FF5911] text-white text-sm font-bold hover:bg-[#FF5911]/85 transition-all">
+                Continuar al formulario <ArrowRight size={14} weight="bold" />
+              </button>
+            </div>
+          )}
+
+          {urlError && (
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-white/4 border border-white/10">
+              <span className="text-white/40 text-lg flex-shrink-0">⚠</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-white/70">No se pudo analizar la URL</p>
+                <p className="text-xs text-white/35">Verifica el link o rellena el formulario manualmente</p>
+              </div>
+              <button onClick={() => { setModo("manual"); setStep(1); }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/8 text-white/70 text-xs font-bold hover:bg-white/12 transition-all">
+                Ir al formulario <ArrowRight size={12} weight="bold" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Modo manual — barra de progreso */}
       {modo === "manual" && (
         <div className="flex flex-col gap-6">
           <div className="flex gap-1 p-1 rounded-xl bg-white/3 border border-white/6">
-            {["Agente", "Producto", "Precios", "Flujo", "Extras"].map((s, i) => (
-              <button key={s} onClick={() => i + 1 < step && setStep(i + 1)}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${step === i + 1 ? "bg-[#FF5911] text-white" : i + 1 < step ? "text-emerald-400" : "text-white/25"}`}>
-                <span className="block text-[10px] opacity-60">{String(i + 1).padStart(2, "0")}</span>
-                {s}
-              </button>
-            ))}
+            {["Agente", "Producto", "Precios", "Metodología", "Generar"].map((s, i) => {
+              const targetStep = i + 1;
+              const canNavigate = targetStep < step || (
+                (targetStep === 2 && form.nombreAgente && form.enfoque) ||
+                (targetStep === 3 && form.producto && form.problema && form.caracteristicas && form.beneficios) ||
+                (targetStep === 4 && form.precio1) ||
+                (targetStep === 5 && form.preguntaEntrada)
+              );
+              return (
+                <button key={s} onClick={() => canNavigate && setStep(targetStep)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${step === targetStep ? "bg-[#FF5911] text-white" : targetStep < step ? "text-emerald-400 hover:bg-white/5" : canNavigate ? "text-white/50 hover:bg-white/5" : "text-white/25 cursor-not-allowed"}`}>
+                  <span className="block text-[10px] opacity-60">{String(targetStep).padStart(2, "0")}</span>
+                  {s}
+                </button>
+              );
+            })}
           </div>
 
           {/* STEP 1 — Agente */}
@@ -616,14 +854,10 @@ export function PromptBuilder() {
                 </Field>
               </div>
               <Field label="Características *">
-                <textarea className={textarea} rows={3} value={form.caracteristicas} onChange={(e) => set("caracteristicas", e.target.value)} placeholder="- Silicona grado médico&#10;- Válvula de aire patentada" />
+                <textarea className={textarea} rows={3} value={form.caracteristicas} onChange={(e) => set("caracteristicas", e.target.value)} placeholder="- Silicona grado médico&#10;- Válvula de aire patentada&#10;- Disponible en tallas S, M, L (si aplica)" />
               </Field>
               <Field label="Beneficios clave *">
                 <textarea className={textarea} rows={3} value={form.beneficios} onChange={(e) => set("beneficios", e.target.value)} placeholder="- Reduce cólicos hasta un 80%&#10;- Facilita la transición" />
-              </Field>
-              <Field label="¿El producto tiene tallas o colores?">
-                <Chips options={[{ val: "no", label: "No aplica" }, { val: "si", label: "Sí tiene tallas/colores" }]}
-                  value={form.tieneTalla ? "si" : "no"} onChange={(v) => set("tieneTalla", v === "si")} />
               </Field>
               <NavRow onBack={() => setStep(1)} onNext={() => {
                 if (!form.producto || !form.problema || !form.caracteristicas || !form.beneficios) { alert("Completa todos los campos obligatorios"); return; }
@@ -647,36 +881,101 @@ export function PromptBuilder() {
                   <input className={input} value={form.precio3} onChange={(e) => set("precio3", e.target.value)} placeholder="Ej: $139.900" />
                 </Field>
               </div>
-              <Field label="Tiempo de entrega">
-                <Chips options={[
-                  { val: "4-6 días hábiles", label: "4–6 días" },
-                  { val: "2-3 días hábiles", label: "2–3 días" },
-                  { val: "1-2 días hábiles", label: "1–2 días" },
-                  { val: "3-5 días hábiles", label: "3–5 días" },
-                ]} value={form.entrega} onChange={(v) => set("entrega", v)} />
-              </Field>
-              <Field label="Método de pago">
-                <Chips options={[
-                  { val: "Pago contra entrega", label: "Contra entrega" },
-                  { val: "Transferencia o contra entrega", label: "Transferencia" },
-                  { val: "Cualquier método", label: "Múltiples" },
-                ]} value={form.pago} onChange={(v) => set("pago", v)} />
-              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Tiempo de entrega">
+                  <input className={input} value={form.entrega} onChange={(e) => set("entrega", e.target.value)} />
+                </Field>
+                <Field label="Método de pago">
+                  <input className={input} value={form.pago} onChange={(e) => set("pago", e.target.value)} />
+                </Field>
+              </div>
               <NavRow onBack={() => setStep(2)} onNext={() => {
                 if (!form.precio1) { alert("Agrega el precio de 1 unidad"); return; }
+                generarCamposEstructura(form.estructura);
                 setStep(4);
               }} />
             </div>
           )}
 
-          {/* STEP 4 — Flujo + Apertura */}
+          {/* STEP 4 — Metodología */}
           {step === 4 && (
-            <div className="flex flex-col gap-4">
-              <StepHeader icono="🧠" titulo="Flujo de conversación" sub="Elige la metodología ideal para tu producto" />
+            <div className="flex flex-col gap-5">
+              <StepHeader icono="📋" titulo="Metodología" sub="Define la estructura del flujo inicial en el CRM" />
 
+              {/* Selector de estructura */}
+              <div>
+                <Label>Estructura del flujo</Label>
+                <p className="text-xs text-white/40 mb-3">Elige el orden del contenido que se enviará al cliente</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {ESTRUCTURAS.map((e) => (
+                    <button key={e.id} onClick={() => generarCamposEstructura(e.id)}
+                      className={`text-left p-3 rounded-xl border transition-all ${form.estructura === e.id ? "border-[#FF5911]/50 bg-[#FF5911]/8" : "border-white/6 bg-white/3 hover:border-white/15"}`}>
+                      <p className={`text-sm font-bold mb-1 ${form.estructura === e.id ? "text-[#FF5911]" : "text-white"}`}>{e.nombre}</p>
+                      <p className="text-[10px] text-white/30">{e.tieneBienvenida ? "Con bienvenida" : "Sin bienvenida"}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 1. MENSAJE INICIAL */}
+              <div className="border-t border-white/6 pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-[#FF5911] text-white text-xs font-bold flex items-center justify-center">1</span>
+                  <Label>Mensaje inicial</Label>
+                </div>
+                {ESTRUCTURAS.find(e => e.id === form.estructura)?.tieneBienvenida ? (
+                  <input className={input} value={form.mensajeInicial} onChange={(e) => set("mensajeInicial", e.target.value)}
+                    placeholder="Ej: Holaaa, Bienvenido a [Tu Tienda] tu tienda de confianza! en un minuto te estaremos atendiendo 👋" />
+                ) : (
+                  <p className="text-xs text-white/40 italic p-3 rounded-xl bg-white/3 border border-white/6">Esta estructura no incluye mensaje de bienvenida</p>
+                )}
+              </div>
+
+              {/* 2. CONTENIDO MULTIMEDIA */}
+              <div className="border-t border-white/6 pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-[#FF5911] text-white text-xs font-bold flex items-center justify-center">2</span>
+                  <Label>Contenido multimedia (sugerido)</Label>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {ESTRUCTURAS.find(e => e.id === form.estructura)?.multimedia.map((m, i) => (
+                    <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-white/3 border border-white/6">
+                      <span className="w-5 h-5 rounded bg-white/8 flex items-center justify-center text-[10px] text-white/40 font-bold">{i + 1}</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${m.tipo === "VIDEO" ? "bg-purple-500/20 text-purple-400" : "bg-blue-500/20 text-blue-400"}`}>{m.tipo}</span>
+                      <span className="text-xs text-white/50">{m.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. PREGUNTA DE ENTRADA */}
+              <div className="border-t border-white/6 pt-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-6 h-6 rounded-full bg-[#FF5911] text-white text-xs font-bold flex items-center justify-center">3</span>
+                  <Label>Pregunta de entrada</Label>
+                </div>
+                <p className="text-xs text-white/40 mb-3 ml-8">Incluye: pregunta sobre el dolor + beneficios + precios + pregunta de apertura + audio</p>
+                <textarea className={textarea} rows={5} value={form.preguntaEntrada} onChange={(e) => set("preguntaEntrada", e.target.value)}
+                  placeholder={`Ej:\n✅ $${form.precio1 || "XX.XXX"} con envío a tu puerta 📦 Pagas cuando lo recibes — sin riesgos, sin adelantos\n\n¿Cuéntame en qué ciudad te encuentras para ver si tenemos envío gratis? 😊`} />
+                <p className="text-[10px] text-white/30 mt-2 ml-1">💡 Incluye también un audio saludando y reforzando la pregunta</p>
+              </div>
+
+              <NavRow onBack={() => setStep(3)} onNext={() => {
+                if (!form.preguntaEntrada) { alert("Escribe la pregunta de entrada"); return; }
+                setStep(5);
+              }} />
+            </div>
+          )}
+
+          {/* STEP 5 — Flujo + Generar */}
+          {step === 5 && (
+            <div className="flex flex-col gap-4">
+              <StepHeader icono="⚡" titulo="Flujo y extras" sub="Elige el flujo de conversación y genera el prompt" />
+
+              {/* Selector de flujo */}
               <div className="grid grid-cols-2 gap-3">
                 {FLUJOS.map((f) => (
-                  <button key={f.val} onClick={() => { set("flujo", f.val); setAperturas([]); set("aperturaSeleccionada", ""); }}
+                  <button key={f.val} onClick={() => set("flujo", f.val)}
                     className={`text-left p-4 rounded-2xl border-2 transition-all ${form.flujo === f.val ? "border-[#FF5911] bg-[#FF5911]/8" : "border-white/6 bg-white/3 hover:border-white/15"}`}>
                     <span className="text-xl block mb-2">{f.icono}</span>
                     <p className={`text-sm font-bold mb-1 ${form.flujo === f.val ? "text-[#FF5911]" : "text-white"}`}>{f.nombre}</p>
@@ -686,70 +985,19 @@ export function PromptBuilder() {
                 ))}
               </div>
 
-              {/* Apertura */}
+              {/* Upsell opcional */}
               <div className="border-t border-white/6 pt-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-white/35 mb-3">Pregunta de apertura</p>
-                <div className="p-3 rounded-xl bg-[#FF5911]/6 border border-[#FF5911]/15 text-xs text-white/50 leading-relaxed mb-4">
-                  Es el primer mensaje que envía tu bot. Recomendamos generarlo con IA para que quede adaptado al flujo y producto.
+                <p className="text-xs font-bold uppercase tracking-widest text-white/35 mb-3">Upsell (opcional)</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Producto upsell">
+                    <input className={input} value={form.upsellProducto} onChange={(e) => set("upsellProducto", e.target.value)} placeholder="Ej: Envío prioritario" />
+                  </Field>
+                  <Field label="Precio upsell">
+                    <input className={input} value={form.upsellPrecio} onChange={(e) => set("upsellPrecio", e.target.value)} placeholder="Ej: $5.000" />
+                  </Field>
                 </div>
-                <Field label="Modo de apertura">
-                  <Chips options={[{ val: "ia", label: "🤖 Generar con IA" }, { val: "manual", label: "✏️ Escribir la mía" }]}
-                    value={form.modoApertura} onChange={(v) => set("modoApertura", v as ModoApertura)} />
-                </Field>
-
-                {form.modoApertura === "ia" && (
-                  <div className="mt-3 flex flex-col gap-3">
-                    <button onClick={generarAperturas} disabled={loadingApertura}
-                      className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-bold text-white/70 hover:bg-[#FF5911]/10 hover:border-[#FF5911]/30 hover:text-white transition-all disabled:opacity-40">
-                      {loadingApertura ? (
-                        <><div className="w-4 h-4 border-2 border-[#FF5911] border-t-transparent rounded-full animate-spin" />Generando…</>
-                      ) : (
-                        <><Sparkle size={16} />✨ Generar 3 opciones con IA</>
-                      )}
-                    </button>
-                    {aperturas.length > 0 && (
-                      <div className="flex flex-col gap-2">
-                        {aperturas.map((a, i) => (
-                          <button key={i} onClick={() => set("aperturaSeleccionada", a)}
-                            className={`text-left p-4 rounded-xl border transition-all ${form.aperturaSeleccionada === a ? "border-[#FF5911]/50 bg-[#FF5911]/8" : "border-white/6 bg-white/3 hover:border-white/15"}`}>
-                            <span className={`text-[10px] font-bold uppercase tracking-wider block mb-1 ${form.aperturaSeleccionada === a ? "text-[#FF5911]" : "text-white/30"}`}>Opción {i + 1}</span>
-                            <p className="text-sm text-white/70 leading-relaxed">{a}</p>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {form.modoApertura === "manual" && (
-                  <div className="mt-3">
-                    <textarea className={textarea} rows={3} value={form.aperturaManual}
-                      onChange={(e) => set("aperturaManual", e.target.value)}
-                      placeholder="Ej: ¿Tu bebé llora mucho después de comer y no sabes cómo calmarlo? 😔" />
-                  </div>
-                )}
               </div>
 
-              <NavRow onBack={() => setStep(3)} onNext={() => {
-                const apertura = form.modoApertura === "ia" ? form.aperturaSeleccionada : form.aperturaManual;
-                if (!apertura) { alert("Selecciona o escribe una pregunta de apertura"); return; }
-                setStep(5);
-              }} />
-            </div>
-          )}
-
-          {/* STEP 5 — Extras */}
-          {step === 5 && (
-            <div className="flex flex-col gap-4">
-              <StepHeader icono="✨" titulo="Extras opcionales" sub="Personaliza el upsell (si dejas vacío se usan guiones estándar)" />
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Producto upsell">
-                  <input className={input} value={form.upsellProducto} onChange={(e) => set("upsellProducto", e.target.value)} placeholder="Ej: Envío prioritario" />
-                </Field>
-                <Field label="Precio upsell">
-                  <input className={input} value={form.upsellPrecio} onChange={(e) => set("upsellPrecio", e.target.value)} placeholder="Ej: $5.000" />
-                </Field>
-              </div>
               <div className="flex gap-3 mt-2">
                 <button onClick={() => setStep(4)}
                   className="flex items-center gap-2 px-5 py-3 rounded-full border border-white/10 text-sm text-white/50 hover:text-white hover:border-white/20 transition-colors">
